@@ -12,7 +12,7 @@ if get_platform().startswith('linux'):
 
 setup(
   name = 'leakless',
-  version = '0.01',
+  version = '0.02',
   description = 'Leakless helps you avoid leaking UNIX file descriptors and child processes.',
   url = 'https://github.com/percontation/leakless',
   package_dir = {'leakless': 'src'},
