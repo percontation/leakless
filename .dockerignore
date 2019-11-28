@@ -2,3 +2,4 @@
 !src/*
 !setup.py
 !test.py
+!MANIFEST.in

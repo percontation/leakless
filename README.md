@@ -21,3 +21,5 @@ Processes killed by the subreaper wrapper are given a few seconds to respond to 
 Leakless makes no attempt at thread-safety. Its classes are not threadsafe, and some of its guarantees (namely, always setting `CLOEXEC`) can race with a `fork()` call happening in another thread. That said, it's probably fine for most threaded python use-cases.
 
 This library is currently highly untested, and I'm not even using it for real yet, so... don't trust it.
+
+On Linux, at least kernel version 3.5 is required for everything to work correctly; I'm not testing so it could be higher though.

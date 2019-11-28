@@ -1,4 +1,7 @@
 from ._autofd import AutoFD
-from ._subreaper import spawn
+try:
+  from ._subreaper import spawn
+except ImportError:
+  pass
 
 # TODO: a more friendly wrapper for spawn.

@@ -179,22 +179,12 @@ static void show_proc(struct globals *globals, pid_t pid) {
   }
 }
 
-
-//
-// 
-//
-
+// TODO: We probably want to switch this to issue signals recursively.
 static void kill_children(struct globals *globals, int sig) {
-  char buf[40];
-  if(snprintf(buf, sizeof buf, "/proc/self/task/%u/children", globals->pid) >= sizeof buf) {
-    eprintf("snprintf: truncated %s\n", buf);
-    return;
-  }
-
-  FILE *children = fopen(buf, "r");
+  FILE *children = fopen("/proc/thread-self/children", "r");
   if(!children) {
     eperror("fopen");
-    eputs("Can't kill children due to inaccessible /proc/self/task/tid/children\n");
+    eputs("Can't kill children due to inaccessible /proc/thread-self/children\n");
     return;
   }
 
@@ -344,9 +334,7 @@ static void __attribute__((__noreturn__)) doit(struct globals *globals) {
 
   // reap until child exits.
   while(1) {
-    eprintf("waiting...\n");
     pid_t pid = wait(&status);
-    eprintf("got %d\n", pid);
 
     if(pid < 0) {
       if(errno == EINTR)
@@ -370,19 +358,17 @@ static void __attribute__((__noreturn__)) doit(struct globals *globals) {
 
   show_reaped_proc(0, status); // Show main proc as pid 0 to distinguish it.
 
-  do {
-    // Silently reap everything that's already exited or exits before a grace period.
-    if(wait_for_children(globals, 1000))
-      break;
-
+  // Silently reap everything that's already exited or exits before a grace period.
+  if(!wait_for_children(globals, 1000)) {
     // Kill & complain about remaining children.
     kill_children(globals, SIGTERM);
-    if(wait_for_children(globals, 3000))
-      break;
-
-    // Really kill children now. Let init do the reaping.
-    kill_children(globals, SIGKILL);
-  } while(0);
+    if(!wait_for_children(globals, 3000)) {
+      // Really kill children now.
+      do {
+        kill_children(globals, SIGKILL);
+      } while(!wait_for_children(globals, 1000));
+    }
+  }
 
   if(WIFEXITED(status)) {
 #ifndef STANDALONE
